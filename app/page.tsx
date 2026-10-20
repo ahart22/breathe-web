@@ -28,7 +28,7 @@ export default async function Home() {
               Breathe
             </h1>
             <p className="muted" style={{ margin: 0, fontSize: 17 }}>
-              Take a break and take a breath.
+              Helping students with stress
             </p>
             <AuthForm />
           </div>
