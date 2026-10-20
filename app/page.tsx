@@ -27,8 +27,13 @@ export default async function Home() {
             <h1 className="gradient-text" style={{ fontSize: 46, margin: 0 }}>
               Breathe
             </h1>
-            <p className="muted" style={{ margin: 0, fontSize: 17 }}>
-              Helping students with stress
+            <p
+              className="muted"
+              // Balanced wrapping keeps the two lines even; without it the line
+              // breaks after "to", which reads badly.
+              style={{ margin: 0, fontSize: 17, maxWidth: 310, textWrap: "balance" }}
+            >
+              Guided breathing exercises for students to help with stress
             </p>
             <AuthForm />
           </div>
