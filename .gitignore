@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+build/
+.DS_Store
+
+# Secrets. .env.local holds your Supabase keys and must never be committed.
+.env*.local
+.env
+
+.vercel
+*.tsbuildinfo
+next-env.d.ts

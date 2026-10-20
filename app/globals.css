@@ -1,0 +1,406 @@
+/* Breathe — design tokens and components.
+   Several of these started life as CSS on Uiverse, were translated into
+   SwiftUI for the macOS app, and have now come home. Attributions kept. */
+
+:root {
+  --page: #06080d;
+  --panel: #111827;
+  --panel-raised: #18202f;
+  --line: rgba(255, 255, 255, 0.08);
+
+  --ink: rgba(255, 255, 255, 0.93);
+  --ink-soft: rgba(255, 255, 255, 0.55);
+  --ink-faint: rgba(255, 255, 255, 0.4);
+
+  --indigo: #6366f1;
+  --pink: #ec4899;
+  --yellow: #facc15;
+  --green: #6fc08c;
+  --red: #e3796e;
+
+  --sweep: linear-gradient(to right, var(--indigo), var(--pink), var(--yellow));
+  --radius: 24px;
+
+  --font: ui-rounded, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input { font-family: inherit; }
+a { color: inherit; }
+
+/* ------------------------------------------------------------ the panel */
+
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  min-height: 560px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 18px 26px 26px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+}
+
+.panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.chip-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink-faint);
+  font-size: 12px;
+  display: grid;
+  place-items: center;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.chip-button:hover { color: var(--ink); background: rgba(255, 255, 255, 0.12); }
+
+.phase { font-size: 21px; font-weight: 500; margin: 0; }
+.guidance { font-size: 13px; color: var(--ink-faint); margin: 0; font-weight: 500; }
+.muted { color: var(--ink-faint); font-size: 13px; }
+
+/* ------------------------------------- glow button (Uiverse, shivam_7937) */
+
+.glow-button { position: relative; display: inline-flex; isolation: isolate; }
+
+.glow-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: var(--sweep);
+  filter: blur(11px);
+  opacity: 0.6;
+  transition: opacity 1s ease;
+  z-index: -1;
+}
+.glow-button:hover::before { opacity: 1; transition-duration: 0.2s; }
+
+.glow-button > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 14px;
+  background: var(--panel);
+  padding: 12px 26px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.glow-button:hover > span {
+  background: #1f2937;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+}
+.glow-button:disabled { cursor: default; }
+.glow-button:disabled::before { opacity: 0.6; }
+.glow-button:disabled > span { transform: none; box-shadow: none; background: var(--panel); }
+
+/* An unchosen option: same slab, no glow, an edge so it does not vanish. */
+.glow-button.plain::before { opacity: 0; }
+.glow-button.plain > span {
+  color: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13);
+}
+.glow-button.small > span { padding: 9px 17px; font-size: 13px; }
+
+.arrow { display: inline-block; transition: transform 0.2s ease; }
+.glow-button:hover .arrow { transform: translateX(3px); }
+
+/* ------------------------------ segmented pill (Uiverse, andrew-demchenk0) */
+
+.pill {
+  position: relative;
+  display: inline-flex;
+  background: #fff;
+  border: 2px solid var(--panel);
+  border-radius: 30px;
+  padding: 2px;
+  box-shadow: 3px 3px 0 var(--panel);
+}
+
+.pill button {
+  min-width: 86px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--panel);
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.pill button[data-on="true"] { background: var(--panel); color: #fff; }
+
+/* -------------------------------- tactile button (Uiverse-style, pressable) */
+
+.tactile {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 4px;
+}
+.tactile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 11px;
+  background: #36383f;
+}
+.tactile > span {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 11px;
+  background: #666a72;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 8px 14px;
+  transition: transform 0.08s ease;
+}
+.tactile:active > span { transform: translateY(4px); }
+.tactile:disabled { opacity: 0.45; cursor: default; }
+.tactile:disabled:active > span { transform: none; }
+
+/* ------------------------------------------- animated gradient text */
+
+.gradient-text {
+  background: linear-gradient(
+    to right,
+    var(--indigo), var(--pink), var(--yellow), var(--pink), var(--indigo)
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sweep 6s linear infinite;
+  font-weight: 700;
+}
+
+@keyframes sweep {
+  from { background-position: 0% 50%; }
+  to   { background-position: -200% 50%; }
+}
+
+/* ------------------------------------------------------- sparkle trail */
+
+.sparkle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 60;
+  fill: #fff;
+  animation: sparkle 0.68s ease-out forwards;
+}
+
+@keyframes sparkle {
+  0%   { transform: scale(0.3); opacity: 0; }
+  18%  { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(0.25); opacity: 0; }
+}
+
+/* -------------------------------------------------------- the figure */
+
+.figure {
+  width: min(300px, 80%);
+  height: auto;
+  display: block;
+  /* The artwork is white line work on a near-black field. Screen blending
+     drops that field to nothing over any backdrop, which is the CSS
+     equivalent of the luminance mask the macOS version uses — and it stays
+     correct if the panel colour ever changes. */
+  mix-blend-mode: screen;
+}
+
+/* ------------------------------------------------------ preferences */
+
+.prefs { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 18px; }
+.prefs h2 { font-size: 15px; margin: 0 0 6px; font-weight: 600; }
+.prefs p { font-size: 12px; color: var(--ink-faint); margin: 0 0 10px; line-height: 1.5; }
+.prefs hr { border: none; border-top: 1px solid var(--line); margin: 0; }
+.row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+
+.switch {
+  width: 38px; height: 22px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  position: relative; transition: background 0.18s ease;
+  flex-shrink: 0;
+}
+.switch[data-on="true"] { background: linear-gradient(to right, var(--indigo), var(--pink)); }
+.switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: 999px; background: #fff;
+  transition: transform 0.18s ease;
+}
+.switch[data-on="true"]::after { transform: translateX(16px); }
+
+.number {
+  width: 56px; height: 32px; text-align: center;
+  border-radius: 9px; background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--ink); font-size: 13px; font-weight: 600;
+}
+.number:focus { outline: none; border-color: var(--pink); }
+
+.stepper {
+  width: 26px; height: 26px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.7); font-size: 13px; line-height: 1;
+  display: grid; place-items: center;
+}
+.stepper:disabled { opacity: 0.35; cursor: default; }
+
+/* ---------------------------------------------------------- receipt */
+
+.printer { width: 300px; max-width: 100%; margin: 0 auto; }
+
+.machine {
+  background: #262d3b;
+  border-radius: 18px;
+  padding: 9px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.screen {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 11px; padding: 9px 11px;
+  font-size: 11px; color: rgba(255, 255, 255, 0.72); font-weight: 500;
+}
+.slot { height: 5px; border-radius: 3px; background: rgba(0, 0, 0, 0.65); margin: 9px 20px 0; }
+
+.spinner {
+  width: 13px; height: 13px; border-radius: 999px; flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.75);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.paper-window { overflow: hidden; }
+.paper {
+  background: #f4f1ea;
+  color: #212124;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  padding: 14px 18px 16px;
+  text-align: left;
+  /* Forty teeth, four deep — the torn edge. */
+  clip-path: polygon(
+    0 0, 100% 0, 100% calc(100% - 4px),
+    98.75% 100%, 97.5% calc(100% - 4px), 96.25% 100%, 95% calc(100% - 4px),
+    93.75% 100%, 92.5% calc(100% - 4px), 91.25% 100%, 90% calc(100% - 4px),
+    88.75% 100%, 87.5% calc(100% - 4px), 86.25% 100%, 85% calc(100% - 4px),
+    83.75% 100%, 82.5% calc(100% - 4px), 81.25% 100%, 80% calc(100% - 4px),
+    78.75% 100%, 77.5% calc(100% - 4px), 76.25% 100%, 75% calc(100% - 4px),
+    73.75% 100%, 72.5% calc(100% - 4px), 71.25% 100%, 70% calc(100% - 4px),
+    68.75% 100%, 67.5% calc(100% - 4px), 66.25% 100%, 65% calc(100% - 4px),
+    63.75% 100%, 62.5% calc(100% - 4px), 61.25% 100%, 60% calc(100% - 4px),
+    58.75% 100%, 57.5% calc(100% - 4px), 56.25% 100%, 55% calc(100% - 4px),
+    53.75% 100%, 52.5% calc(100% - 4px), 51.25% 100%, 50% calc(100% - 4px),
+    48.75% 100%, 47.5% calc(100% - 4px), 46.25% 100%, 45% calc(100% - 4px),
+    43.75% 100%, 42.5% calc(100% - 4px), 41.25% 100%, 40% calc(100% - 4px),
+    38.75% 100%, 37.5% calc(100% - 4px), 36.25% 100%, 35% calc(100% - 4px),
+    33.75% 100%, 32.5% calc(100% - 4px), 31.25% 100%, 30% calc(100% - 4px),
+    28.75% 100%, 27.5% calc(100% - 4px), 26.25% 100%, 25% calc(100% - 4px),
+    23.75% 100%, 22.5% calc(100% - 4px), 21.25% 100%, 20% calc(100% - 4px),
+    18.75% 100%, 17.5% calc(100% - 4px), 16.25% 100%, 15% calc(100% - 4px),
+    13.75% 100%, 12.5% calc(100% - 4px), 11.25% 100%, 10% calc(100% - 4px),
+    8.75% 100%, 7.5% calc(100% - 4px), 6.25% 100%, 5% calc(100% - 4px),
+    3.75% 100%, 2.5% calc(100% - 4px), 1.25% 100%, 0 calc(100% - 4px)
+  );
+  animation: feed 1.75s steps(10, end) both;
+}
+
+/* Ten short advances with a pause between: line-by-line printing, not a slide. */
+@keyframes feed {
+  from { transform: translateY(calc(-100% + 2px)); }
+  to   { transform: translateY(0); }
+}
+
+.paper h1 { font-size: 11px; letter-spacing: 3px; text-align: center; margin: 0; }
+.paper .date { font-size: 9px; text-align: center; margin: 3px 0 0; opacity: 0.7; }
+.paper .rule { border-top: 1px dashed rgba(0, 0, 0, 0.3); margin: 10px 0; }
+.paper .lead { font-size: 11px; font-weight: 700; margin: 0; }
+.paper .note { font-size: 10px; opacity: 0.72; margin: 5px 0 0; line-height: 1.45; }
+.paper dl { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; margin: 0; font-size: 10.5px; }
+.paper dt { margin: 0; }
+.paper dd { margin: 0; text-align: right; }
+.paper .foot { font-size: 9px; text-align: center; opacity: 0.6; margin: 10px 0 0; }
+
+/* --------------------------------------------------------------- auth */
+
+.auth { width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.auth input {
+  width: 100%; height: 40px; padding: 0 13px;
+  border-radius: 11px; background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  color: var(--ink); font-size: 14px;
+}
+.auth input:focus { outline: none; border-color: var(--pink); }
+.auth .error { color: var(--red); font-size: 12px; min-height: 16px; margin: 0; font-weight: 500; }
+.auth .swap { background: none; color: var(--ink-faint); font-size: 12px; text-decoration: underline; padding: 4px; }
+
+/* --------------------------------------------------------- history */
+
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; width: 100%; }
+.card {
+  background: var(--panel-raised); border-radius: 16px; padding: 15px;
+  text-align: left; box-shadow: inset 0 0 0 1px var(--line);
+}
+.card .label { font-size: 11.5px; color: var(--ink-faint); margin: 0; font-weight: 500; }
+.card .value { font-size: 25px; font-weight: 700; margin: 8px 0 0; }
+.card.lit { background: var(--sweep); box-shadow: none; }
+.card.lit .label { color: rgba(255, 255, 255, 0.9); }
+
+.log { width: 100%; text-align: left; font-size: 12px; }
+.log li {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--line); list-style: none;
+}
+.log ul { margin: 0; padding: 0; }
+.dot { width: 6px; height: 6px; border-radius: 999px; display: inline-block; margin-right: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
