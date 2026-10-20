@@ -24,14 +24,12 @@ export default async function Home() {
       <div className="shell">
         <div className="panel">
           <div className="panel-body">
-            <h1 className="gradient-text" style={{ fontSize: 30, margin: 0 }}>
+            <h1 className="gradient-text" style={{ fontSize: 46, margin: 0 }}>
               Breathe
             </h1>
-            <p className="muted" style={{ margin: 0 }}>
-              Three minutes, once a day.
+            <p className="muted" style={{ margin: 0, fontSize: 17 }}>
+              Take a break and take a breath.
             </p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="figure" src="/figure.png" alt="" />
             <AuthForm />
           </div>
         </div>

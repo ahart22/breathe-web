@@ -12,6 +12,8 @@ import { GlowButton } from "./GlowButton";
 import { Preferences } from "./Preferences";
 import { ReceiptPrinter } from "./ReceiptPrinter";
 import { SegmentedPill } from "./SegmentedPill";
+import { FluidMorphBg } from "./FluidMorphBg";
+import { ReminderBanner } from "./ReminderBanner";
 import { SparkleTrail } from "./SparkleTrail";
 
 const TICK = 1 / 60;
@@ -38,6 +40,11 @@ export function BreathingApp({
     seconds: number; breaths: number; completed: boolean;
   } | null>(null);
 
+  const [discSize, setDiscSize] = useState(300);
+  const runningRef = useRef(false);
+  const [reminding, setReminding] = useState(false);
+  /** When the next reminder is due, as a timestamp. */
+  const dueAt = useRef<number | null>(null);
   const timer = useRef<number | null>(null);
   const state = useRef({ phase: "idle" as Phase, phaseElapsed: 0, elapsed: 0, breath: 0 });
 
@@ -48,6 +55,20 @@ export function BreathingApp({
   useEffect(() => {
     const id = window.setTimeout(() => setOpening(false), 1700);
     return () => window.clearTimeout(id);
+  }, []);
+
+  // The canvas needs real pixels, so the size comes from the viewport rather
+  // than from CSS.
+  useEffect(() => {
+    const measure = () =>
+      setDiscSize(
+        Math.round(
+          Math.max(240, Math.min(440, Math.min(window.innerWidth * 0.46, window.innerHeight * 0.52))),
+        ),
+      );
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, []);
 
   const savePrefs = useCallback(async (patch: Partial<PreferencesRow>) => {
@@ -144,60 +165,144 @@ export function BreathingApp({
   useEffect(() => stopTimer, []);
 
   useEffect(() => {
-    if (!prefs.reminders_on) return;
+    runningRef.current = running;
+  }, [running]);
 
+  useEffect(() => {
+    if (!prefs.reminders_on) {
+      dueAt.current = null;
+      return;
+    }
+
+    const gap = prefs.interval_minutes * 60 * 1000;
+    dueAt.current = Date.now() + gap;
+
+    // Checked against the clock rather than trusted to fire on time.
+    // Browsers throttle timers in background tabs to about once a minute, so
+    // a plain setInterval of the full length drifts badly or is skipped; this
+    // only ever runs late, never not at all.
+    const check = () => {
+      if (runningRef.current) return;
+      if (dueAt.current && Date.now() >= dueAt.current) {
+        dueAt.current = Date.now() + gap;
+        notify();
+      }
+    };
+
+    const id = window.setInterval(check, 15000);
+    // A throttled tab can go quiet entirely; coming back to it catches up.
+    document.addEventListener("visibilitychange", check);
+
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", check);
+    };
+  }, [prefs.reminders_on, prefs.interval_minutes]);
+
+  /** The tab title is the one channel that is readable from another tab
+   *  without any permission at all. */
+  useEffect(() => {
+    if (!reminding) {
+      document.title = "Breathe";
+      return;
+    }
+
+    let flipped = true;
+    document.title = "\u23F0 Take a breath";
     const id = window.setInterval(() => {
-      if (running) return;
-      if ("Notification" in window && Notification.permission === "granted") {
+      flipped = !flipped;
+      document.title = flipped ? "\u23F0 Take a breath" : "Breathe";
+    }, 1100);
+
+    return () => {
+      window.clearInterval(id);
+      document.title = "Breathe";
+    };
+  }, [reminding]);
+
+  /** Fires every channel at once, because each one can fail on its own:
+   *  the banner is invisible from another tab, the tab title is invisible if
+   *  the window is behind something, and an OS notification can be swallowed
+   *  by permissions or Do Not Disturb with no error. Together they cover it. */
+  function notify() {
+    setReminding(true);
+
+    // Only time it out while they are actually looking. A reminder that
+    // expired unseen in a background tab would be worse than none.
+    if (document.visibilityState === "visible") {
+      window.setTimeout(() => setReminding(false), 14000);
+    }
+
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
         new Notification("Take a breath", {
           body: "You have been at it a while.",
-          icon: "/figure.png",
+          icon: "/figure-alpha.png",
+          // Keeps it on screen rather than auto-dismissing, and stops a
+          // stack building up if several fire.
+          requireInteraction: true,
+          tag: "breathe-reminder",
         });
+      } catch {
+        // Some platforms refuse the constructor outright; the other two
+        // channels have already done the job.
       }
-    }, prefs.interval_minutes * 60 * 1000);
-
-    return () => window.clearInterval(id);
-  }, [prefs.reminders_on, prefs.interval_minutes, running]);
+    }
+  }
 
   const remaining = Math.max(1, Math.ceil(PHASE_SECONDS[phase] * (1 - progress)) || 1);
 
   if (opening) {
     return (
-      <div className="shell">
-        <div className="panel">
-          <div className="panel-body">
-            <h1 className="gradient-text" style={{ fontSize: 28, margin: 0 }}>
-              Take a breath in
-            </h1>
-          </div>
+      <div className="app">
+        <div className="app-main">
+          <h1
+            className="gradient-text"
+            style={{ fontSize: "clamp(30px, 5vw, 56px)", margin: 0 }}
+          >
+            Take a breath in
+          </h1>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="shell">
+    <div className="app">
+      {/* Home only. Settings, the receipt and the sign-in page keep the
+          plain background they had before. */}
+      {tab === 0 && phase !== "finished" && <FluidMorphBg />}
       <SparkleTrail />
-      <div className="panel">
-        <header className="panel-head">
+
+      {reminding && (
+        <ReminderBanner
+          onBegin={() => {
+            setReminding(false);
+            setTab(0);
+            begin();
+          }}
+          onDismiss={() => setReminding(false)}
+        />
+      )}
+      <header className="app-head">
           <span style={{ width: 28 }} />
           {phase === "idle" && (
             <SegmentedPill
-              options={["Home", "Preferences", "History"]}
+              options={["Home", "Settings"]}
               selected={tab}
               onSelect={setTab}
             />
           )}
           {running && <span className="muted">{clock(total - elapsed)}</span>}
-          <form action="/auth/signout" method="post">
-            <button className="chip-button" title={`Sign out (${email})`} type="submit">
-              &#9211;
-            </button>
-          </form>
-        </header>
+        <form action="/auth/signout" method="post">
+          <button className="chip-button" title={`Sign out (${email})`} type="submit">
+            &#9211;
+          </button>
+        </form>
+      </header>
 
-        {phase === "finished" && outcome ? (
-          <div className="panel-body">
+      {phase === "finished" && outcome ? (
+        <div className="app-main">
             <ReceiptPrinter
               seconds={outcome.seconds}
               planned={total}
@@ -206,25 +311,38 @@ export function BreathingApp({
               onDone={reset}
             />
           </div>
-        ) : tab === 1 && phase === "idle" ? (
-          <div className="panel-body" style={{ justifyContent: "flex-start", paddingTop: 20 }}>
+      ) : tab === 1 && phase === "idle" ? (
+        <div className="app-main" style={{ justifyContent: "flex-start", paddingTop: "4vh" }}>
+          <div className="column">
             <Preferences
               minutes={prefs.minutes}
               remindersOn={prefs.reminders_on}
               intervalMinutes={prefs.interval_minutes}
               onChange={savePrefs}
+              onTest={notify}
             />
+
+            <hr style={{ border: "none", borderTop: "1px solid var(--line)", margin: "22px 0 18px" }} />
+
+            <section>
+              <h2 style={{ fontSize: 15, margin: "0 0 6px", fontWeight: 600 }}>History</h2>
+              <p style={{ fontSize: 12, color: "var(--ink-faint)", margin: "0 0 14px" }}>
+                Your sessions, saved to your account.
+              </p>
+              <History rows={recent} />
+            </section>
           </div>
-        ) : tab === 2 && phase === "idle" ? (
-          <div className="panel-body" style={{ justifyContent: "flex-start", paddingTop: 20 }}>
-            <History rows={recent} />
-          </div>
-        ) : (
-          <div className="panel-body">
+        </div>
+      ) : (
+        <div className="app-main">
             {running ? (
-              <BreathDisc cycleTime={cycleTimeOf(phase, progress)} />
+              <BreathDisc cycleTime={cycleTimeOf(phase, progress)} size={discSize} />
             ) : (
-              <img className="figure" src="/figure.png" alt="Someone lying back in the grass" />
+              <div
+                className="figure"
+                role="img"
+                aria-label="Someone lying back in the grass"
+              />
             )}
 
             <div>
@@ -241,12 +359,11 @@ export function BreathingApp({
                   Stop
                 </button>
               </>
-            ) : (
-              <GlowButton onClick={begin}>Begin &middot; {prefs.minutes} minutes</GlowButton>
-            )}
-          </div>
-        )}
-      </div>
+          ) : (
+            <GlowButton onClick={begin}>Begin &middot; {prefs.minutes} minutes</GlowButton>
+          )}
+        </div>
+      )}
     </div>
   );
 }

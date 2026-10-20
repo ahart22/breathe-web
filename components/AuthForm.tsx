@@ -5,6 +5,28 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { GlowButton } from "./GlowButton";
 
+/** Turns Supabase's wording into something a person can act on. */
+function readable(message: string): string {
+  const text = message.toLowerCase();
+
+  if (text.includes("failed to fetch") || text.includes("networkerror")) {
+    return "Could not reach the server. Check your connection, or reload the page if it has been open a while.";
+  }
+  if (text.includes("email not confirmed")) {
+    return "This account still needs confirming. Check your inbox, or send the email again below.";
+  }
+  if (text.includes("invalid login credentials")) {
+    return "That email and password do not match an account.";
+  }
+  if (text.includes("already registered") || text.includes("already been registered")) {
+    return "There is already an account with that email. Try signing in instead.";
+  }
+  if (text.includes("password should be")) {
+    return "Use a password of at least 8 characters.";
+  }
+  return message;
+}
+
 export function AuthForm() {
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signup");
@@ -13,6 +35,8 @@ export function AuthForm() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Shown when an account exists but has not been confirmed. */
+  const [needsConfirming, setNeedsConfirming] = useState(false);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -21,6 +45,7 @@ export function AuthForm() {
     setBusy(true);
     setError(null);
     setNotice(null);
+    setNeedsConfirming(false);
 
     const supabase = createClient();
     const credentials = { email: email.trim(), password };
@@ -31,21 +56,42 @@ export function AuthForm() {
         : await supabase.auth.signInWithPassword(credentials);
 
     if (failure) {
-      setError(failure.message);
+      setError(readable(failure.message));
+      if (failure.message.toLowerCase().includes("email not confirmed")) {
+        setNeedsConfirming(true);
+      }
       setBusy(false);
       return;
     }
 
-    // With email confirmation switched on, sign-up returns a user but no
-    // session — they have to click the link first.
+    // With confirmation switched on, sign-up returns a user but no session.
     if (mode === "signup" && data.user && !data.session) {
-      setNotice("Check your email to confirm the account, then sign in.");
+      setNotice("Account created. Confirm it from the email we just sent, then sign in.");
+      setNeedsConfirming(true);
       setMode("signin");
       setBusy(false);
       return;
     }
 
     router.refresh();
+  }
+
+  async function resend() {
+    if (!email.trim()) {
+      setError("Enter your email first.");
+      return;
+    }
+
+    setBusy(true);
+    const supabase = createClient();
+    const { error: failure } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+    });
+
+    setError(failure ? readable(failure.message) : null);
+    setNotice(failure ? null : "Sent. Check your inbox, and your spam folder.");
+    setBusy(false);
   }
 
   return (
@@ -68,13 +114,21 @@ export function AuthForm() {
         onChange={(event) => setPassword(event.target.value)}
       />
 
-      <p className="error">{error ?? notice ?? " "}</p>
+      <p className="error" style={notice && !error ? { color: "var(--green)" } : undefined}>
+        {error ?? notice ?? " "}
+      </p>
 
       <div style={{ textAlign: "center" }}>
         <GlowButton type="submit" disabled={busy}>
-          {mode === "signup" ? "Create account" : "Sign in"}
+          {busy ? "One moment" : mode === "signup" ? "Create account" : "Sign in"}
         </GlowButton>
       </div>
+
+      {needsConfirming && (
+        <button type="button" className="swap" onClick={resend} disabled={busy}>
+          Send the confirmation email again
+        </button>
+      )}
 
       <button
         type="button"
@@ -82,6 +136,7 @@ export function AuthForm() {
         onClick={() => {
           setMode(mode === "signup" ? "signin" : "signup");
           setError(null);
+          setNotice(null);
         }}
       >
         {mode === "signup"

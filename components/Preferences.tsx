@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { LENGTHS } from "@/lib/session";
 import { GlowButton } from "./GlowButton";
-import { TactileButton } from "./TactileButton";
 
 export function Preferences({
   minutes,
   remindersOn,
   intervalMinutes,
   onChange,
+  onTest,
 }: {
   minutes: number;
   remindersOn: boolean;
@@ -19,14 +19,11 @@ export function Preferences({
     reminders_on?: boolean;
     interval_minutes?: number;
   }) => void;
+  onTest: () => void;
 }) {
   const [draft, setDraft] = useState(String(intervalMinutes));
-  const [permission, setPermission] = useState<NotificationPermission>("default");
 
   useEffect(() => setDraft(String(intervalMinutes)), [intervalMinutes]);
-  useEffect(() => {
-    if ("Notification" in window) setPermission(Notification.permission);
-  }, []);
 
   function commit(value: number) {
     const clamped = Math.min(Math.max(Math.round(value) || 1, 1), 480);
@@ -36,8 +33,10 @@ export function Preferences({
 
   async function toggleReminders() {
     const next = !remindersOn;
+    // Asked for, but not depended on: the reminder shows in the page either
+    // way, and an OS notification is a bonus on top.
     if (next && "Notification" in window && Notification.permission === "default") {
-      setPermission(await Notification.requestPermission());
+      await Notification.requestPermission();
     }
     onChange({ reminders_on: next });
   }
@@ -66,11 +65,7 @@ export function Preferences({
 
       <section>
         <h2>Study reminders</h2>
-        <p>
-          A nudge to come back and breathe. Browsers only run timers in an open
-          tab, so keep this one open while you work — close it and the
-          reminders stop.
-        </p>
+        <p>A nudge to come back and breathe.</p>
 
         <div className="row" style={{ marginBottom: 10 }}>
           <button
@@ -115,15 +110,21 @@ export function Preferences({
             +
           </button>
           <span className="muted">minutes</span>
-          <TactileButton disabled={!remindersOn} onClick={() => commit(Number(draft))}>
+          <GlowButton
+            small
+            arrow={false}
+            disabled={!remindersOn}
+            onClick={() => commit(Number(draft))}
+          >
             Set
-          </TactileButton>
+          </GlowButton>
         </div>
 
-        {remindersOn && permission === "denied" && (
-          <p style={{ color: "var(--red)", marginTop: 10 }}>
-            Notifications are blocked for this site, so reminders cannot show.
-            Allow them in your browser settings.
+        {remindersOn && (
+          <p style={{ marginTop: 14, marginBottom: 0 }}>
+            <button type="button" className="swap" onClick={onTest}>
+              Show a test reminder
+            </button>
           </p>
         )}
       </section>

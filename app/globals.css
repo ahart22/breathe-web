@@ -41,6 +41,76 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 input { font-family: inherit; }
 a { color: inherit; }
 
+
+/* ------------------------------------------- the signed-in app, full screen */
+
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(14px, 2.4vh, 26px) clamp(18px, 4vw, 52px) clamp(22px, 4vh, 44px);
+  position: relative;
+  isolation: isolate;
+}
+
+/* A faint wash of the palette, so a full screen of near-black has some depth
+   without anything competing with the exercise itself. */
+.app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(55% 45% at 50% -5%, rgba(99, 102, 241, 0.13), transparent 70%),
+    radial-gradient(45% 40% at 88% 105%, rgba(236, 72, 153, 0.10), transparent 70%),
+    radial-gradient(40% 35% at 8% 95%, rgba(250, 204, 21, 0.06), transparent 70%);
+}
+
+.app-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 36px;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 2.8vh, 30px);
+  text-align: center;
+}
+
+/* Full-bleed background, but text kept to a readable measure. */
+.column {
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.app .phase {
+  font-size: clamp(24px, 3.4vw, 38px);
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.app .guidance {
+  font-size: clamp(13px, 1.3vw, 17px);
+  margin: 7px 0 0;
+}
+
+.app .figure { width: clamp(260px, 30vw, 440px); }
+
+.app .glow-button > span { padding: 14px 30px; font-size: 16px; }
+
+.app .printer { width: clamp(300px, 34vw, 360px); }
+
 /* ------------------------------------------------------------ the panel */
 
 .shell {
@@ -54,14 +124,32 @@ a { color: inherit; }
 .panel {
   position: relative;
   width: 100%;
-  max-width: 440px;
-  min-height: 560px;
+  max-width: 420px;
+  /* Hugs its content. A fixed height left the login card mostly empty once
+     the figure came out of it. */
   background: var(--panel);
   border-radius: var(--radius);
-  padding: 18px 26px 26px;
+  padding: 40px 34px 34px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+}
+
+/* The sign-in page gets the same ambient wash as the app behind it. */
+.shell {
+  position: relative;
+  isolation: isolate;
+}
+.shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(55% 45% at 50% -5%, rgba(99, 102, 241, 0.13), transparent 70%),
+    radial-gradient(45% 40% at 88% 105%, rgba(236, 72, 153, 0.10), transparent 70%);
 }
 
 .panel-head {
@@ -154,17 +242,17 @@ a { color: inherit; }
   position: relative;
   display: inline-flex;
   background: #fff;
-  border: 2px solid var(--panel);
-  border-radius: 30px;
-  padding: 2px;
-  box-shadow: 3px 3px 0 var(--panel);
+  border: 3px solid var(--panel);
+  border-radius: 40px;
+  padding: 3px;
+  box-shadow: 4px 4px 0 var(--panel);
 }
 
 .pill button {
-  min-width: 86px;
-  padding: 6px 10px;
+  min-width: 124px;
+  padding: 10px 18px;
   border-radius: 999px;
-  font-size: 11.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--panel);
   transition: background 0.18s ease, color 0.18s ease;
@@ -242,13 +330,18 @@ a { color: inherit; }
 
 .figure {
   width: min(300px, 80%);
-  height: auto;
+  aspect-ratio: 436 / 254;
   display: block;
-  /* The artwork is white line work on a near-black field. Screen blending
-     drops that field to nothing over any backdrop, which is the CSS
-     equivalent of the luminance mask the macOS version uses — and it stays
-     correct if the panel colour ever changes. */
-  mix-blend-mode: screen;
+  /* figure-alpha.png carries real transparency, so the artwork is a mask and
+     the colour comes from here. Blend modes could only ever give us white;
+     this way the figure can be any shade we like. */
+  background: linear-gradient(
+    160deg,
+    rgba(150, 160, 205, 0.95),
+    rgba(120, 130, 175, 0.8)
+  );
+  -webkit-mask: url(/figure-alpha.png) center / contain no-repeat;
+  mask: url(/figure-alpha.png) center / contain no-repeat;
 }
 
 /* ------------------------------------------------------ preferences */
@@ -365,6 +458,7 @@ a { color: inherit; }
 .paper dd { margin: 0; text-align: right; }
 .paper .foot { font-size: 9px; text-align: center; opacity: 0.6; margin: 10px 0 0; }
 
+
 /* --------------------------------------------------------------- auth */
 
 .auth { width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left; }
@@ -403,4 +497,130 @@ a { color: inherit; }
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ------------------------------------------------------- the reminder ---- */
+
+.reminder {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 13px 14px;
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 24px 50px -12px rgba(0, 0, 0, 0.7);
+  animation: drop-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes drop-in {
+  from { transform: translate(-50%, -140%); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
+}
+
+.reminder-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: var(--sweep);
+}
+
+.reminder-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.reminder-text strong { font-size: 13.5px; font-weight: 600; }
+.reminder-text span { font-size: 11.5px; color: var(--ink-faint); }
+
+.reminder-go {
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(to right, var(--indigo), var(--pink));
+  flex-shrink: 0;
+}
+
+.reminder-close {
+  color: var(--ink-faint);
+  font-size: 17px;
+  line-height: 1;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+.reminder-close:hover { color: var(--ink); }
+
+/* ------------------------------------------------- fluid morph (home) ---- */
+
+.fluid {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  display: block;
+  filter: blur(80px);
+  opacity: 0.5;
+  will-change: transform, border-radius;
+}
+
+.blob-1 {
+  width: 52vw; height: 52vw;
+  top: -14%; left: -8%;
+  background: radial-gradient(circle at 35% 35%, rgba(99, 102, 241, 0.75), transparent 68%);
+  animation: morph-a 34s ease-in-out infinite;
+}
+
+.blob-2 {
+  width: 46vw; height: 46vw;
+  top: 18%; right: -10%;
+  background: radial-gradient(circle at 60% 40%, rgba(236, 72, 153, 0.62), transparent 68%);
+  animation: morph-b 43s ease-in-out infinite;
+}
+
+.blob-3 {
+  width: 58vw; height: 58vw;
+  bottom: -22%; left: 12%;
+  background: radial-gradient(circle at 45% 55%, rgba(250, 204, 21, 0.34), transparent 66%);
+  animation: morph-c 51s ease-in-out infinite;
+}
+
+.blob-4 {
+  width: 38vw; height: 38vw;
+  bottom: 6%; right: 16%;
+  background: radial-gradient(circle at 50% 50%, rgba(129, 140, 248, 0.5), transparent 70%);
+  animation: morph-a 38s ease-in-out infinite reverse;
+}
+
+/* Asymmetric radii are what make a blob look like it is deforming rather
+   than just drifting. */
+@keyframes morph-a {
+  0%, 100% { border-radius: 62% 38% 44% 56% / 54% 46% 54% 46%; transform: translate(0, 0) scale(1); }
+  33%      { border-radius: 38% 62% 58% 42% / 42% 60% 40% 58%; transform: translate(5%, 4%) scale(1.08); }
+  66%      { border-radius: 52% 48% 34% 66% / 62% 36% 64% 38%; transform: translate(-4%, 6%) scale(0.95); }
+}
+
+@keyframes morph-b {
+  0%, 100% { border-radius: 44% 56% 62% 38% / 46% 58% 42% 54%; transform: translate(0, 0) scale(1); }
+  40%      { border-radius: 60% 40% 36% 64% / 58% 42% 58% 42%; transform: translate(-6%, 5%) scale(1.1); }
+  70%      { border-radius: 36% 64% 54% 46% / 40% 56% 44% 60%; transform: translate(3%, -5%) scale(0.94); }
+}
+
+@keyframes morph-c {
+  0%, 100% { border-radius: 56% 44% 38% 62% / 60% 40% 60% 40%; transform: translate(0, 0) scale(1); }
+  45%      { border-radius: 40% 60% 66% 34% / 38% 62% 38% 62%; transform: translate(6%, -4%) scale(1.06); }
+  75%      { border-radius: 64% 36% 46% 54% / 52% 48% 52% 48%; transform: translate(-5%, -6%) scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blob { animation: none; }
 }
