@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /** Refreshes the Supabase session cookie on every request, so a signed-in
  *  user does not get bounced out when the access token expires. */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

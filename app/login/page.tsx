@@ -8,11 +8,19 @@ export const metadata = { title: "Log in | Breathe" };
 
 export default async function LogInPage() {
   const supabase = await createClient();
+
+  let user = null;
   try {
     const { data } = await supabase.auth.getUser();
-    if (data.user) redirect("/app");
+    user = data.user;
   } catch {
     // Unreachable backend: still show the form rather than a crash.
+    user = null;
   }
+
+  // Outside the try on purpose: redirect() works by throwing, so a catch
+  // around it would swallow the redirect.
+  if (user) redirect("/app");
+
   return <AuthPanel mode="login" />;
 }
