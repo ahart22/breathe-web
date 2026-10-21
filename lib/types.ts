@@ -16,3 +16,10 @@ export type PreferencesRow = {
   interval_minutes: number;
   updated_at: string;
 };
+
+export type NoteRow = {
+  id: string;
+  user_id: string;
+  body: string;
+  created_at: string;
+};
