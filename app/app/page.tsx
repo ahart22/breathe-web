@@ -48,6 +48,8 @@ export default async function AppPage() {
       </header>
 
       <main className="workspace-main">
+        <Reflections userId={user.id} initial={(notes as NoteRow[]) ?? []} />
+
         <section className="panel-card breathe-card">
           <h2 className="card-title">Take three minutes</h2>
           <p className="muted card-sub">
@@ -57,8 +59,6 @@ export default async function AppPage() {
             Start breathing exercise
           </Link>
         </section>
-
-        <Reflections userId={user.id} initial={(notes as NoteRow[]) ?? []} />
       </main>
     </div>
   );

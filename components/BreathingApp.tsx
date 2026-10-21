@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { PreferencesRow, SessionRow } from "@/lib/types";
+import type { NoteRow, PreferencesRow, SessionRow } from "@/lib/types";
 import {
   breathsFor, clock, cycleTimeOf, guidanceFor, nextPhase,
   PHASE_LABEL, PHASE_SECONDS, type Phase,
@@ -10,6 +10,7 @@ import {
 import { BreathDisc } from "./BreathDisc";
 import { GlowButton } from "./GlowButton";
 import { Preferences } from "./Preferences";
+import { Reflections } from "./Reflections";
 import { ReceiptPrinter } from "./ReceiptPrinter";
 import { SegmentedPill } from "./SegmentedPill";
 import { FluidMorphBg } from "./FluidMorphBg";
@@ -20,12 +21,16 @@ const TICK = 1 / 60;
 
 export function BreathingApp({
   email,
+  userId,
   preferences: initial,
   recent: initialRecent,
+  notes: initialNotes,
 }: {
   email: string;
+  userId: string;
   preferences: PreferencesRow;
   recent: SessionRow[];
+  notes: NoteRow[];
 }) {
   const [tab, setTab] = useState(0);
   const [prefs, setPrefs] = useState(initial);
@@ -314,6 +319,10 @@ export function BreathingApp({
       ) : tab === 1 && phase === "idle" ? (
         <div className="app-main" style={{ justifyContent: "flex-start", paddingTop: "4vh" }}>
           <div className="column">
+            <Reflections userId={userId} initial={initialNotes} />
+
+            <hr style={{ border: "none", borderTop: "1px solid var(--line)", margin: "22px 0 18px" }} />
+
             <Preferences
               minutes={prefs.minutes}
               remindersOn={prefs.reminders_on}
